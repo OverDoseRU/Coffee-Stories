@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Stories | Эстетика кофе в Пензе</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'coffee-dark': '#3C2F2F',
+                        'coffee-medium': '#8B7355',
+                        'coffee-light': '#D4C4B7',
+                        'bg-main': '#FAF8F5',
+                        'bg-card': '#FFFFFF',
+                    },
+                    fontFamily: {
+                        'serif': ['"Cormorant Garamond"', 'serif'],
+                        'sans': ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .tab-btn {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #3C2F2F;
+            transition: width 0.3s ease;
+        }
+        .tab-btn.active-tab {
+            font-weight: 500;
+        }
+        .tab-btn.active-tab::after {
+            width: 100%;
+        }
+
+        .star-rating i {
+            color: #D4C4B7;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .star-rating i.active, .star-rating i:hover, .star-rating i:hover ~ i {
+            color: #8B7355;
+        }
+        .star-rating.selected i {
+            color: #D4C4B7;
+        }
+        .star-rating.selected i.active {
+            color: #8B7355;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #FAF8F5; }
+        ::-webkit-scrollbar-thumb { background: #D4C4B7; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8B7355; }
+    </style>
+
+    <!-- Подключение Firebase через классический CDN (работает даже при file:///) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="bg-bg-main text-coffee-dark font-sans antialiased flex flex-col min-h-screen">
+
+    <header class="fixed w-full top-0 z-50 bg-bg-main/90 backdrop-blur-md border-b border-coffee-light/30 transition-all duration-300">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <a href="#" class="font-serif text-3xl font-semibold tracking-wide text-coffee-dark flex items-center gap-2">
+                    <i class="fa-solid fa-mug-hot text-coffee-medium text-xl"></i>
+                    Coffee Stories
+                </a>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#about" class="text-sm tracking-widest uppercase hover:text-coffee-medium transition-colors">О нас</a>
+                    <a href="#menu" class="text-sm tracking-widest uppercase hover:text-coffee-medium transition-colors">Меню</a>
+                    <a href="#reviews" class="text-sm tracking-widest uppercase hover:text-coffee-medium transition-colors">Отзывы</a>
+                    <a href="#contacts" class="text-sm tracking-widest uppercase hover:text-coffee-medium transition-colors">Контакты</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=2000&auto=format&fit=crop" alt="Атмосфера кофейни" class="w-full h-full object-cover opacity-20">
+            <div class="absolute inset-0 bg-gradient-to-b from-bg-main/80 via-transparent to-bg-main"></div>
+        </div>
+        
+        <div class="max-w-4xl mx-auto px-4 relative z-10 text-center reveal">
+            <h1 class="font-serif text-5xl md:text-7xl mb-6 text-coffee-dark leading-tight">
+                Истории, которые <br>
+                <span class="italic text-coffee-medium">начинаются с кофе</span>
+            </h1>
+            <p class="text-lg md:text-xl font-light mb-10 max-w-2xl mx-auto opacity-80">
+                Эстетика в каждой чашке. Уютная атмосфера, авторские напитки и место, где хочется остановить время.
+            </p>
+            <a href="#menu" class="inline-block border-2 border-coffee-dark text-coffee-dark px-10 py-3 uppercase tracking-widest text-sm hover:bg-coffee-dark hover:text-white transition-all duration-300">
+                Посмотреть меню
+            </a>
+        </div>
+    </section>
+
+    <section id="menu" class="py-20 bg-bg-card">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal">
+                <p class="text-coffee-medium uppercase tracking-[0.3em] text-xs font-semibold mb-2">Наш ассортимент</p>
+                <h2 class="font-serif text-4xl md:text-5xl">Меню</h2>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-6 md:gap-12 mb-12 reveal border-b border-coffee-light/30 pb-4">
+                <button class="tab-btn active-tab uppercase text-sm tracking-widest text-coffee-dark" onclick="switchTab('classic')">Классика</button>
+                <button class="tab-btn uppercase text-sm tracking-widest text-coffee-dark opacity-60" onclick="switchTab('signature')">Фирменные & Рафы</button>
+                <button class="tab-btn uppercase text-sm tracking-widest text-coffee-dark opacity-60" onclick="switchTab('noncoffee')">Не кофе</button>
+                <button class="tab-btn uppercase text-sm tracking-widest text-coffee-dark opacity-60" onclick="switchTab('summer')">Летнее меню</button>
+            </div>
+
+            <div id="menu-container" class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8 reveal">
+                <!-- Генерируется через JS -->
+            </div>
+        </div>
+    </section>
+
+    <section id="reviews" class="py-20 bg-bg-main relative">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <p class="text-coffee-medium uppercase tracking-[0.3em] text-xs font-semibold mb-2">Впечатления гостей</p>
+                <h2 class="font-serif text-4xl md:text-5xl">Отзывы</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <div class="lg:col-span-1 reveal">
+                    <div class="bg-bg-card p-8 shadow-sm border border-coffee-light/20 rounded-sm">
+                        <h3 class="font-serif text-2xl mb-6">Оставить отзыв</h3>
+                        <form id="review-form" class="space-y-5">
+                            <div>
+                                <input type="text" id="reviewer-name" placeholder="Ваше имя" required class="w-full bg-transparent border-b border-coffee-light py-2 focus:outline-none focus:border-coffee-medium transition-colors placeholder-coffee-dark/40 font-light">
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm font-light text-coffee-dark/70 mb-2">Оценка:</p>
+                                <div class="star-rating text-xl" id="rating-input">
+                                    <i class="fa-solid fa-star" data-value="1"></i>
+                                    <i class="fa-solid fa-star" data-value="2"></i>
+                                    <i class="fa-solid fa-star" data-value="3"></i>
+                                    <i class="fa-solid fa-star" data-value="4"></i>
+                                    <i class="fa-solid fa-star" data-value="5"></i>
+                                </div>
+                                <input type="hidden" id="rating-value" required>
+                            </div>
+
+                            <div>
+                                <textarea id="review-text" rows="4" placeholder="Поделитесь впечатлениями..." required class="w-full bg-transparent border border-coffee-light p-3 focus:outline-none focus:border-coffee-medium transition-colors placeholder-coffee-dark/40 font-light resize-none"></textarea>
+                            </div>
+
+                            <div class="flex items-start gap-3">
+                                <input type="checkbox" id="privacy-policy" required class="mt-1 accent-coffee-medium cursor-pointer">
+                                <label for="privacy-policy" class="text-xs font-light opacity-80 cursor-pointer">
+                                    Я даю согласие на обработку персональных данных в соответствии с <a href="#" class="underline hover:text-coffee-medium">Политикой конфиденциальности</a>.
+                                </label>
+                            </div>
+
+                            <button type="submit" id="submit-review-btn" class="w-full bg-coffee-dark text-white py-3 uppercase tracking-widest text-sm hover:bg-coffee-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                Отправить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 reveal">
+                    <div id="reviews-list" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div class="animate-pulse p-6 bg-bg-card border border-coffee-light/20">
+                            <div class="h-4 bg-coffee-light/40 rounded w-1/3 mb-4"></div>
+                            <div class="h-3 bg-coffee-light/30 rounded mb-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contacts" class="py-20 bg-bg-card">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="reveal">
+                    <p class="text-coffee-medium uppercase tracking-[0.3em] text-xs font-semibold mb-2">Ждем вас</p>
+                    <h2 class="font-serif text-4xl md:text-5xl mb-8">Контакты</h2>
+                    
+                    <div class="space-y-6 font-light">
+                        <div class="flex items-start gap-4">
+                            <i class="fa-solid fa-location-dot mt-1 text-coffee-medium text-xl w-6"></i>
+                            <div>
+                                <h4 class="font-medium text-lg">Адрес</h4>
+                                <p class="opacity-80">г. Пенза, Улица Лермонтова, 26г/1</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <i class="fa-solid fa-clock mt-1 text-coffee-medium text-xl w-6"></i>
+                            <div>
+                                <h4 class="font-medium text-lg">Режим работы</h4>
+                                <p class="opacity-80">Ежедневно: 09:00 – 21:00</p>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-6 border-t border-coffee-light/30 mt-6">
+                            <h4 class="font-medium mb-4">Наши соцсети:</h4>
+                            <div class="flex gap-4">
+                                <a href="https://vk.com/coffeestories58" target="_blank" class="w-12 h-12 rounded-full border border-coffee-light flex items-center justify-center hover:bg-coffee-medium hover:text-white hover:border-coffee-medium transition-all text-xl">
+                                    <i class="fa-brands fa-vk"></i>
+                                </a>
+                                <a href="https://2gis.com/firm/70000001118733089" target="_blank" class="h-12 px-4 rounded-full border border-coffee-light flex items-center justify-center hover:bg-coffee-medium hover:text-white hover:border-coffee-medium transition-all text-sm uppercase tracking-wider font-medium">
+                                    2GIS
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="reveal h-96 bg-gray-200 rounded-sm overflow-hidden shadow-inner border border-coffee-light/30 relative">
+                    <iframe src="https://yandex.ru/map-widget/v1/?ll=44.999494%2C53.183371&z=17&pt=44.999494,53.183371,pm2rdm" 
+                            width="100%" height="100%" frameborder="0" allowfullscreen="true" class="absolute inset-0">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-coffee-dark text-white py-12 border-t border-coffee-medium/30">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-center md:text-left">
+                <a href="#" class="font-serif text-2xl font-semibold tracking-wide flex items-center justify-center md:justify-start gap-2 mb-2">
+                    <i class="fa-solid fa-mug-hot text-coffee-medium"></i>
+                    Coffee Stories
+                </a>
+                <p class="text-xs text-white/50 font-light">© 2026 ИП (кофейня Coffee Stories). Все права защищены.</p>
+            </div>
+            
+            <div class="text-center text-xs font-light text-white/50 space-y-2">
+                <p>Информация на сайте не является публичной офертой.</p>
+                <a href="#" class="hover:text-white transition-colors underline decoration-white/30">Политика конфиденциальности</a>
+            </div>
+        </div>
+    </footer>
+
+    <div id="custom-modal" class="fixed inset-0 z-[100] bg-coffee-dark/80 flex items-center justify-center hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm">
+        <div class="bg-bg-main p-8 max-w-sm w-full mx-4 text-center rounded-sm shadow-xl transform scale-95 transition-transform duration-300" id="modal-content">
+            <i id="modal-icon" class="fa-solid fa-circle-check text-4xl text-green-600 mb-4"></i>
+            <h3 id="modal-title" class="font-serif text-2xl mb-2">Спасибо!</h3>
+            <p id="modal-desc" class="font-light text-sm opacity-80 mb-6">Ваш отзыв успешно отправлен.</p>
+            <button onclick="closeModal()" class="border border-coffee-dark px-6 py-2 uppercase tracking-widest text-xs hover:bg-coffee-dark hover:text-white transition-colors">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAbNOn-NrbcMUto3SV70dln5ufqt0jk_Ss",
+            authDomain: "coffe-stories.firebaseapp.com",
+            projectId: "coffe-stories",
+            storageBucket: "coffe-stories.firebasestorage.app",
+            messagingSenderId: "110994737917",
+            appId: "1:110994737917:web:2bb2c6a71e4a076fa14c94"
+        };
+
+        let db, auth;
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.firestore();
+            auth = firebase.auth();
+        } catch(e) {
+            console.error("Firebase init error:", e);
+        }
+
+        const menuData = {
+            classic: [
+                { name: 'Капучино', prices: 'S 139₽ &middot; M 159₽ &middot; L 179₽' },
+                { name: 'Латте', prices: 'S 139₽ &middot; M 159₽ &middot; L 179₽' },
+                { name: 'Флэт Уайт', prices: 'S 159₽ &middot; M 179₽ &middot; L 179₽' },
+                { name: 'Раф', desc: 'полностью на сливках', prices: 'S 169₽ &middot; M 189₽ &middot; L 209₽' },
+                { name: 'Американо', desc: 'x2 эспрессо', prices: 'S 129₽ &middot; M 139₽' },
+                { name: 'Эспрессо', prices: '89₽ <span class="text-xs">(30мл)</span>' },
+                { name: 'Двойной Эспрессо', prices: '99₽ <span class="text-xs">(60мл)</span>' },
+                { name: 'Гляссе', desc: 'черный кофе с шариком мороженого', prices: '189₽' },
+            ],
+            signature: [
+                { name: 'Баунти', desc: 'с кокосовой пастой', prices: 'M 169₽ &middot; L 189₽' },
+                { name: 'Латте Халва', prices: 'M 169₽ &middot; L 189₽' },
+                { name: 'Малиновый Латте', prices: 'M 169₽ &middot; L 189₽' },
+                { name: 'Ириска', desc: 'капучино со сгущенкой', prices: 'M 169₽ &middot; L 189₽' },
+                { name: 'Фисташковый Латте', prices: 'M 169₽ &middot; L 189₽' },
+                { name: 'Миндальный Латте', prices: 'M 169₽ &middot; L 189₽' },
+                { name: 'Лавандовый Раф', prices: 'S 169₽ &middot; M 189₽ &middot; L 209₽' },
+                { name: 'Арахисовый Раф', prices: 'M 209₽ &middot; L 229₽' },
+                { name: 'Раф Нутелла', prices: 'M 209₽ &middot; L 229₽' },
+                { name: 'Сырный Раф', prices: 'M 209₽ &middot; L 229₽' },
+            ],
+            noncoffee: [
+                { name: 'Матча Латте', prices: 'M 159₽ &middot; L 179₽' },
+                { name: 'Какао', prices: 'M 149₽ &middot; L 159₽' },
+                { name: 'Горячий Шоколад', prices: '199₽' },
+                { name: 'Молочный Пунш «Нутелла»', prices: 'M 149₽ &middot; L 159₽' },
+                { name: 'Чай SVAY', desc: 'в ассортименте', prices: '69₽' },
+            ],
+            summer: [
+                { name: 'Эспрессо-тоник', prices: 'L (400мл) 179₽' },
+                { name: 'Бамбл', desc: 'без молока, на апельсиновом соке', prices: 'L 179₽' },
+                { name: 'Персиковый Айс Латте', prices: 'L 179₽' },
+                { name: 'Мята-Шоколад', prices: 'L 179₽' },
+                { name: 'Айс Матча', prices: 'L 179₽' },
+                { name: 'Айс Латте', prices: 'L 179₽' },
+                { name: 'Айс Капучино', prices: 'L 179₽' },
+                { name: 'Милкшейк', desc: 'сироп на выбор', prices: '159₽' },
+            ]
+        };
+
+        window.switchTab = function(category) {
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active-tab');
+                btn.classList.add('opacity-60');
+            });
+            const activeBtn = Array.from(buttons).find(b => b.getAttribute('onclick').includes(category));
+            if(activeBtn) {
+                activeBtn.classList.add('active-tab');
+                activeBtn.classList.remove('opacity-60');
+            }
+
+            const container = document.getElementById('menu-container');
+            container.innerHTML = '';
+            
+            const items = menuData[category] || [];
+            items.forEach(item => {
+                const itemHTML = `
+                    <div class="flex justify-between items-end border-b border-coffee-light/20 pb-3 group">
+                        <div class="flex-1 pr-4">
+                            <h4 class="font-serif text-xl group-hover:text-coffee-medium transition-colors">${item.name}</h4>
+                            ${item.desc ? `<span class="block mt-1 text-xs font-light italic opacity-50">${item.desc}</span>` : ''}
+                        </div>
+                        <div class="text-right whitespace-nowrap">
+                            <span class="font-medium text-sm tracking-wide text-coffee-medium">${item.prices}</span>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += itemHTML;
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            switchTab('classic');
+
+            const reveals = document.querySelectorAll('.reveal');
+            const revealOptions = { threshold: 0.15, rootMargin: "0px 0px -50px 0px" };
+            const revealOnScroll = new IntersectionObserver(function(entries, observer) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, revealOptions);
+            reveals.forEach(reveal => revealOnScroll.observe(reveal));
+
+            const stars = document.querySelectorAll('.star-rating i');
+            const ratingInput = document.getElementById('rating-value');
+            const starContainer = document.getElementById('rating-input');
+
+            stars.forEach(star => {
+                star.addEventListener('click', (e) => {
+                    const value = e.target.getAttribute('data-value');
+                    ratingInput.value = value;
+                    starContainer.classList.add('selected');
+                    stars.forEach(s => s.classList.remove('active'));
+                    for(let i = 0; i < value; i++) {
+                        stars[i].classList.add('active');
+                    }
+                });
+                star.addEventListener('mouseenter', (e) => {
+                    if(!starContainer.classList.contains('selected')) {
+                        const value = e.target.getAttribute('data-value');
+                        for(let i = 0; i < value; i++) {
+                            stars[i].classList.add('text-coffee-medium');
+                        }
+                    }
+                });
+                star.addEventListener('mouseleave', () => {
+                    if(!starContainer.classList.contains('selected')) {
+                        stars.forEach(s => s.classList.remove('text-coffee-medium'));
+                    }
+                });
+            });
+
+            if(!auth || !db) return;
+
+            try {
+                await auth.signInAnonymously();
+                const user = auth.currentUser;
+                if(!user) return;
+
+                const reviewsRef = db.collection('coffee_reviews');
+                
+                reviewsRef.onSnapshot((snapshot) => {
+                    const reviewsList = document.getElementById('reviews-list');
+                    reviewsList.innerHTML = '';
+                    
+                    if(snapshot.empty) {
+                        reviewsList.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-12 text-center h-full border-2 border-dashed border-coffee-light/40 rounded-sm"><i class="fa-regular fa-comment-dots text-4xl text-coffee-light mb-3"></i><p class="text-coffee-dark font-medium text-lg">Отзывов пока-что нет, оставить:</p></div>';
+                        return;
+                    }
+
+                    const reviews = [];
+                    snapshot.forEach(doc => {
+                        reviews.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    reviews.sort((a, b) => {
+                        const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+                        const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+                        return timeB - timeA;
+                    });
+
+                    reviews.forEach(review => {
+                        let starsHTML = '';
+                        const rating = parseInt(review.rating) || 5;
+                        for(let i=0; i<5; i++) {
+                            starsHTML += `<i class="fa-solid fa-star text-xs ${i < rating ? 'text-coffee-medium' : 'text-coffee-light'}"></i>`;
+                        }
+
+                        let dateStr = 'Только что';
+                        if(review.createdAt) {
+                            const d = review.createdAt.toDate();
+                            dateStr = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+                        }
+
+                        const safeName = review.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        const safeText = review.text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+                        const reviewCard = `
+                            <div class="bg-bg-card p-6 border border-coffee-light/20 flex flex-col shadow-sm rounded-sm">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h5 class="font-medium text-coffee-dark">${safeName}</h5>
+                                    <div class="flex gap-1">${starsHTML}</div>
+                                </div>
+                                <p class="text-sm font-light leading-relaxed flex-1 italic">"${safeText}"</p>
+                                <span class="text-xs opacity-50 mt-4 block text-right">${dateStr}</span>
+                            </div>
+                        `;
+                        reviewsList.innerHTML += reviewCard;
+                    });
+                }, (error) => {
+                    console.error("Ошибка при получении отзывов:", error);
+                    document.getElementById('reviews-list').innerHTML = '<p class="text-red-500 font-light">Сначала настройте Firebase :)</p>';
+                });
+
+                const form = document.getElementById('review-form');
+                const submitBtn = document.getElementById('submit-review-btn');
+
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    if(!user) return;
+
+                    const name = document.getElementById('reviewer-name').value.trim();
+                    const text = document.getElementById('review-text').value.trim();
+                    const rating = document.getElementById('rating-value').value;
+
+                    if(!rating) {
+                        showModal('Внимание', 'Пожалуйста, поставьте оценку от 1 до 5 звезд.', 'fa-circle-exclamation', 'text-yellow-600');
+                        return;
+                    }
+
+                    submitBtn.disabled = true;
+                    submitBtn.innerText = 'Отправка...';
+
+                    try {
+                        await reviewsRef.add({
+                            name: name,
+                            text: text,
+                            rating: parseInt(rating),
+                            userId: user.uid,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        form.reset();
+                        ratingInput.value = '';
+                        starContainer.classList.remove('selected');
+                        stars.forEach(s => s.classList.remove('active'));
+                        
+                        showModal('Спасибо!', 'Ваш отзыв успешно опубликован.', 'fa-circle-check', 'text-green-600');
+                    } catch (error) {
+                        console.error("Ошибка отправки:", error);
+                        showModal('Ошибка', 'Проверьте настройки Firebase.', 'fa-circle-xmark', 'text-red-600');
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = 'Отправить';
+                    }
+                });
+
+            } catch(e) {
+                console.error("Firebase auth/setup error:", e);
+                document.getElementById('reviews-list').innerHTML = '<p class="font-light opacity-60 col-span-full text-center">Ожидание подключения Firebase...</p>';
+            }
+        });
+
+        window.showModal = function(title, desc, iconClass, iconColorClass) {
+            const modal = document.getElementById('custom-modal');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerText = desc;
+            document.getElementById('modal-icon').className = `fa-solid ${iconClass} text-4xl mb-4 ${iconColorClass}`;
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                document.getElementById('modal-content').classList.remove('scale-95');
+            }, 10);
+        }
+
+        window.closeModal = function() {
+            const modal = document.getElementById('custom-modal');
+            modal.classList.add('opacity-0');
+            document.getElementById('modal-content').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+    </script>
+</body>
+</html>
